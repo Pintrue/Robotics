@@ -31,11 +31,19 @@ for row in all_rows:
 
 all_data = getAlldata(all_entries)
 
+for i in range(0,len(all_data)):
+    for j in range(0, len(all_data[0])):
+        all_data[i][j] = float(all_data[i][j])
+
 t = all_data[0]
+#t = list(map(lambda x: x * 100000, t))
+#print(type(t))
 ra0 = all_data[1]
 a0 = all_data[2]
 ra1 = all_data[3]
 a1 = all_data[4]
+
+
 
 plt.figure(1)
 plt.subplot(211)

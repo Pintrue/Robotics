@@ -1,5 +1,6 @@
 import brickpi
 import time
+import math
 
 interface=brickpi.Interface()
 interface.initialize()
@@ -16,9 +17,9 @@ motorParams0.feedForwardGain = 255/20.0
 motorParams0.minPWM = 18.0
 motorParams0.pidParameters.minOutput = -255
 motorParams0.pidParameters.maxOutput = 255
-motorParams0.pidParameters.k_p = 600.0
-motorParams0.pidParameters.k_i = 0
-motorParams0.pidParameters.k_d = 0
+motorParams0.pidParameters.k_p = 670.0
+motorParams0.pidParameters.k_i = 400#1150.0
+motorParams0.pidParameters.k_d = 200
 
 motorParams1 = interface.MotorAngleControllerParameters()
 motorParams1.maxRotationAcceleration = 6.0
@@ -27,9 +28,9 @@ motorParams1.feedForwardGain = 255/20.0
 motorParams1.minPWM = 18.0
 motorParams1.pidParameters.minOutput = -255
 motorParams1.pidParameters.maxOutput = 255
-motorParams1.pidParameters.k_p = 600.0
-motorParams1.pidParameters.k_i = 0
-motorParams1.pidParameters.k_d = 0
+motorParams1.pidParameters.k_p = 570.0
+motorParams1.pidParameters.k_i = 400#1325.0
+motorParams1.pidParameters.k_d = 200#100.59
 
 
 interface.setMotorAngleControllerParameters(motors[0],motorParams0)
@@ -39,18 +40,18 @@ interface.setMotorAngleControllerParameters(motors[1],motorParams1)
 interface.startLogging("./refangle.txt")
 
 while True:
-	angle = float(input("Enter a angle to rotate (in radians): "))
+    angle = float(input("Enter a angle to rotate (in radians): "))
 
-	interface.increaseMotorAngleReferences(motors,[angle,angle])
+    interface.increaseMotorAngleReferences(motors,[angle,angle])
 
-	while not interface.motorAngleReferencesReached(motors) :
-		motorAngles = interface.getMotorAngles(motors)
-		if motorAngles :
-			print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
-		time.sleep(0.1)
+    while not interface.motorAngleReferencesReached(motors) :
+        motorAngles = interface.getMotorAngles(motors)
+        if motorAngles :
+            print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+        time.sleep(0.1)
 
-	print "Destination reached!"
-	
+    print "Destination reached!"
+    
 # stop logging
 interface.stopLogging("./refangle.txt")
 

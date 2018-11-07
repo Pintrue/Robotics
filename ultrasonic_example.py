@@ -1,21 +1,9 @@
 import brickpi
 import time
+from initial import *
 
-interface=brickpi.Interface()
-interface.initialize()
+interface = Init()
 
-port = 0 # port which ultrasoic sensor is plugged in to
 
-interface.sensorEnable(port, brickpi.SensorType.SENSOR_ULTRASONIC);
-
-while True:
-	usReading = interface.getSensorValue(port)
-
-	if usReading :
-		print usReading
-	else:
-		print "Failed US reading"
-
-	time.sleep(0.05)
-
+interface.ultrasonic()
 interface.terminate()

@@ -7,6 +7,7 @@ interface.initialize()
 
 motors = [0,1]
 speed = 6.0
+angle_ratio = 1.66
 
 interface.motorEnable(motors[0])
 interface.motorEnable(motors[1])
@@ -18,9 +19,9 @@ motorParams0.feedForwardGain = 255/20.0
 motorParams0.minPWM = 18.0
 motorParams0.pidParameters.minOutput = -255
 motorParams0.pidParameters.maxOutput = 255
-motorParams0.pidParameters.k_p = 510.0
-motorParams0.pidParameters.k_i = 1300.0
-motorParams0.pidParameters.k_d = 95.0
+motorParams0.pidParameters.k_p = 670.0
+motorParams0.pidParameters.k_i = 400.0
+motorParams0.pidParameters.k_d = 200.0
 
 motorParams1 = interface.MotorAngleControllerParameters()
 motorParams1.maxRotationAcceleration = 6.0
@@ -30,20 +31,20 @@ motorParams1.minPWM = 18.0
 motorParams1.pidParameters.minOutput = -255
 motorParams1.pidParameters.maxOutput = 255
 motorParams1.pidParameters.k_p = 570.0
-motorParams1.pidParameters.k_i = 1300.0
-motorParams1.pidParameters.k_d = 70.0
+motorParams1.pidParameters.k_i = 400.0
+motorParams1.pidParameters.k_d = 200.0
 
 interface.setMotorAngleControllerParameters(motors[0],motorParams0)
 interface.setMotorAngleControllerParameters(motors[1],motorParams1)
 
 def right90deg():
-    interface.increaseMotorAngleReferences(motors,[math.pi * 1.155, math.pi * -1.155])
+    interface.increaseMotorAngleReferences(motors,[math.pi * angle_ratio, math.pi * -angle_ratio])
     while not interface.motorAngleReferencesReached(motors) :
       #motorAngles = interface.getMotorAngles(motors)
       time.sleep(0.1)
 	
 def left90deg():
-    interface.increaseMotorAngleReferences(motors,[math.pi * -1.155, math.pi * 1.155])
+    interface.increaseMotorAngleReferences(motors,[math.pi * -angle_ratio, math.pi * angle_ratio])
     while not interface.motorAngleReferencesReached(motors) :
       #motorAngles = interface.getMotorAngles(motors)
       time.sleep(0.1)

@@ -1,5 +1,6 @@
 import math
 import random
+import sys
 
 lines = [("OA", (0, 0), (0, 168)),
 ("OH", (0, 0), (210, 0)),
@@ -84,6 +85,24 @@ def resample(particles):
     for _ in range(100):
         rnm = random.uniform(tp)
         # TODO: wo ri ni xue ma
+
+#return index
+def binary_lookup(cdf, rnm):
+    start = 0
+    end = len(cdf) - 1
+    mid = int((start + end) / 2)
+    if rnm > cdf[end]:
+        print("Error: rnm greater than largest of cdf")
+        sys.exit(1)
+    while rnm > cdf[mid + 1] or rnm < cdf[mid]:
+        if rnm > cdf[mid + 1]:
+            start = mid
+            mid = int((mid + end) / 2)
+        else:
+            end = mid
+            mid = int((start + mid) / 2)
+    return mid
+
 
 print(normalise([1,2,3]))
 

@@ -1,4 +1,5 @@
 import math
+import random
 
 lines = [("OA", (0, 0), (0, 168)),
 ("OH", (0, 0), (210, 0)),
@@ -51,9 +52,38 @@ def calculate_likelihood(x, y, theta, z):
     sd = 1
     return math.exp(-(z - m)** 2 / 2 / sd ** 2)
 
-def normalise(ws):
-    s = sum(ws)
-    return [float(w) / s for w in ws]
+def normalise(ps):
+    tp = reduce(lambda x, y: x + y, map(lambda p: p[3], ps))
+    return [(x, y, theta, float(p) / tp) for (x, y, theta, p) in ps]
+
+def sample(ori, dest, sigma=0.55, z):
+    dx = dest[0] - ori[0]
+    dy = dest[1] - ori[1]
+    theta = ori[2]
+    particles = []
+    dist = math.sqrt(dx**2 + dy**2)
+    for _ in range(100):
+        e = random.gauss(0, sigma)
+        x += (dist + e) * math.cos(theta)
+        y += (dist + e) * math.sin(theta)
+        theta += random.gauss(0, sigma)
+        theta %= 2 * math.pi
+        p = calculate_likelihood(x, y, theta, z)
+        particles.append((x,y,theta, p))
+    return normalise(particles)
+    # return particles
+
+def resample(particles):
+    acc = 0
+    cdf = []
+    for (_, _, _, p) in particles:
+        acc += p
+        cdf.append(acc)
+
+    tp = cdf[len(cdf) - 1]
+    for _ in range(100):
+        rnm = random.uniform(tp)
+        # TODO: wo ri ni xue ma
 
 print(normalise([1,2,3]))
 

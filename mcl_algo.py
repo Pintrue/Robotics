@@ -48,8 +48,13 @@ def calculate_likelihood(x, y, theta, z):
         m = calculate_m(x, y, theta, pa, pb)
         if m >= 0 and is_on_the_line(pa, pb, calculate_intersect(x, y, theta, m)) and m < res:
             res = m
-            line = lines[i][0]
-    return line
+    sd = 1
+    return math.exp(-(z - m)** 2 / 2 / sd ** 2)
 
+def normalise(ws):
+    s = sum(ws)
+    return [float(w) / s for w in ws]
+
+print(normalise([1,2,3]))
 
 print calculate_likelihood(1, 1, 0, 90)

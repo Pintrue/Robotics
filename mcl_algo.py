@@ -51,17 +51,18 @@ def calculate_likelihood(x, y, theta, z):
         #print "THIS IS " + str(m)
         if m >= 0 and is_on_the_line(pa, pb, calculate_intersect(x, y, theta, m)) and m < res:
             res = m
-    sd = 1
+        #print "z and m for particle " + str(i) + " is:" + str(z) + " and " + str(m)
+    sd = 0.2
     return math.exp(-(z - m)** 2 / 2 / sd ** 2)
 
 def normalise(ps):
     probs = map(lambda p: p[3], ps)
     #print probs
     tp = reduce(lambda x, y: x + y, probs)
-    print tp
+    print "Total prob: " + str(tp)
     return [(x, y, theta, float(p) / tp) for (x, y, theta, p) in ps]
 
-def sample(ori, dest, z, sigma=0.55):
+def sample(ori, dest, z, sigma=0.55): #0.55
     dx = dest[0] - ori[0]
     dy = dest[1] - ori[1]
     theta = ori[2]
@@ -73,11 +74,11 @@ def sample(ori, dest, z, sigma=0.55):
         e = random.gauss(0, sigma)
         new_x = x + (dist + e) * math.cos(theta)
         new_y = y + (dist + e) * math.sin(theta)
-        theta += random.gauss(0, sigma)
-        theta %= 2 * math.pi
-        p = calculate_likelihood(new_x, new_y, theta, z)
+        new_theta = theta + random.gauss(0, 0.01)
+#        new_theta %= 2 * math.pi
+        p = calculate_likelihood(new_x, new_y, new_theta, z)
         #print p
-        particles.append((new_x,new_y,theta, p))
+        particles.append((new_x,new_y,new_theta, p))
     return normalise(particles)
     # return particles
 
@@ -85,7 +86,8 @@ def resample(particles):
     acc = 0
     cdf = [0]
     resampled_particles = []
-    for (_, _, _, p) in particles:
+    for (x, y, t, p) in particles:
+        print (x, y, t, p)
         acc += p
         cdf.append(acc)
 
@@ -132,7 +134,7 @@ def nextMove(ori, dst, interval):
         print ori[2]
         dx = float("{:.2f}".format(math.cos(ori[2]))) * interval
         dy = float("{:.2f}".format(math.sin(ori[2]))) * interval
-        return (dx, dy)
+        return (dx + ori[0], dy + ori[1])
 
 def displayParticles(particles):
     print "drawParticles:" + str(particles)

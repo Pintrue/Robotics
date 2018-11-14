@@ -76,7 +76,7 @@ def sample(ori, dest, sigma=0.55, z):
 
 def resample(particles):
     acc = 0
-    cdf = []
+    cdf = [0]
     for (_, _, _, p) in particles:
         acc += p
         cdf.append(acc)

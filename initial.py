@@ -214,6 +214,15 @@ class Init:
             counter += 1
         print("counter is " + counter + " with time " + str(time.time() - start_time))
     
+    def ultrasonic_average_reading(self):
+        readings = []
+        for _ in range(10):
+            usReading = self.interface.getSensorValue(self.sensor_port)
+            if usReading:
+                readings.append(usReading)
+            time.sleep(0.05)
+        return readings.sort()[len(readings)]
+
     def detect_bump(self):
         distance = 5
         while True:

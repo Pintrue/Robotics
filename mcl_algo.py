@@ -14,8 +14,8 @@ lines = [("OA", (0, 0), (0, 168)),
 ("GH", (210, 84), (210, 0))]
 
 def calculate_intersect(x, y, theta, m):
-    xn = x + m * math.cos(theta)
-    yn = y + m * math.sin(theta)
+    xn = x + m * math.cos(math.radians(theta))
+    yn = y + m * math.sin(math.radians(theta))
     return (xn, yn)
 
 def calculate_m(x, y, theta, pa, pb):
@@ -24,7 +24,7 @@ def calculate_m(x, y, theta, pa, pb):
     bx = pb[0]
     by = pb[1]
     t1 = (by-ay) * (ax-x) - (bx-ax) * (ay-y)
-    t2 = (by-ay) * math.cos(theta) - (bx-ax) * math.sin(theta)
+    t2 = (by-ay) * math.cos(math.radians(theta)) - (bx-ax) * math.sin(math.radians(theta))
     return float('inf') if t2 == 0 else t1 / t2
 
 def is_on_the_line(pa, pb, p):
@@ -72,8 +72,8 @@ def sample(ori, dest, z, sigma=0.08): #0.55
     y = ori[1]
     for _ in range(100):
         e = random.gauss(0, sigma)
-        new_x = x + (dist + e) * math.cos(theta)
-        new_y = y + (dist + e) * math.sin(theta)
+        new_x = x + (dist + e) * math.cos(math.radians(theta))
+        new_y = y + (dist + e) * math.sin(math.radians(theta))
         new_theta = theta + random.gauss(0, sigma)
 #        new_theta %= 2 * math.pi
         p = calculate_likelihood(new_x, new_y, new_theta, z)
@@ -139,8 +139,8 @@ def nextMove(ori, dst, interval):
         return dst
     else:
         theta = ori[2]
-        dx = float("{:.2f}".format(math.cos(ori[2]))) * interval
-        dy = float("{:.2f}".format(math.sin(ori[2]))) * interval
+        dx = float("{:.2f}".format(math.cos(math.radians(ori[2])))) * interval
+        dy = float("{:.2f}".format(math.sin(math.radians(ori[2])))) * interval
         return (dx + ori[0], dy + ori[1])
 
 def displayParticles(particles):
@@ -172,8 +172,8 @@ def displayParticles(particles):
 #         interface.global_x, interface.global_y, interface.global_theta = current_pos
 #         if next_mov == next_dst:
 #             break
-    
-    
+
+
 
 
 

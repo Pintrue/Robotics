@@ -55,6 +55,7 @@ class Particles:
         self.data = [(84, 30, 0)] * self.n
         
     def draw(self):
+        #scaled = [(x * 10, y * 10, theta, w) for (x, y, theta, w) in self.data]
         canvas.drawParticles(self.data)
 
 canvas = Canvas();    # global canvas we are going to draw on
@@ -94,9 +95,12 @@ particles = Particles()
 
 for i in range(len(points)):
     next_dst = points[i]
-    ori = (interface.global_x, interface.global_y, interface.global_theta)
+    ori = (interface.global_x, interface.global_y, math.radians(interface.global_theta))
     remaining_distance = distance(ori, next_dst)
+    print "to the next point" + str(next_dst) + " from " + str(ori)
     while True:
+        interface.turnToPoint(next_dst[0], next_dst[1])
+        ori = (ori[0], ori[1], math.radians(interface.global_theta))
         print "CURRENT POSITION: " + str(ori)
         next_mov = nextMove(ori, next_dst, interval)
         print "Moving to " + str(next_mov)
@@ -104,11 +108,12 @@ for i in range(len(points)):
         sonar_reading = interface.ultrasonic_average_reading()
         print "Sonar reading: " + str(sonar_reading)
         resampled_particles = resample(sample(ori, next_mov, sonar_reading))
-        #displayParticles(resampled_particles)
         particles.data = resampled_particles
         particles.draw()
         current_pos = averageOf(resampled_particles)
-        interface.global_x, interface.global_y, interface.global_theta, _ = current_pos
+        interface.global_x, interface.global_y, rad, _ = current_pos
+        degree = math.degrees(rad)
+        interface.global_theta = degree
         ori = (interface.global_x, interface.global_y, interface.global_theta)
         if next_mov == next_dst:
             break

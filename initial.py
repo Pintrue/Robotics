@@ -10,7 +10,7 @@ class Init:
         
         self.motors = [0,1]
         
-        self.angle_ratio = 1.1 / 90
+        self.angle_ratio = 1.25 / 90
         
         self.move_ratio = 0.3
         
@@ -23,18 +23,18 @@ class Init:
 
         self.interface.motorEnable(self.motors[0])
         self.interface.motorEnable(self.motors[1])
-
+	#left wheel 
         motorParams0 = self.interface.MotorAngleControllerParameters()
         motorParams0.maxRotationAcceleration = 6.0
         motorParams0.maxRotationSpeed = 12.0
-        motorParams0.feedForwardGain = 255/20.0
+        motorParams0.feedForwardGain = 319/20 #255/20.0
         motorParams0.minPWM = 18.0
         motorParams0.pidParameters.minOutput = -255
         motorParams0.pidParameters.maxOutput = 255
         motorParams0.pidParameters.k_p = 670.0
         motorParams0.pidParameters.k_i = 400
         motorParams0.pidParameters.k_d = 200
-
+	#right wheel
         motorParams1 = self.interface.MotorAngleControllerParameters()
         motorParams1.maxRotationAcceleration = 6.0
         motorParams1.maxRotationSpeed = 12.0

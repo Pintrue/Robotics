@@ -219,7 +219,7 @@ class Init:
         for _ in range(10):
             usReading = self.interface.getSensorValue(self.sensor_port)
             if usReading:
-                readings.append(usReading[0])
+                readings.append(usReading[0] + 16)
             time.sleep(0.05)
         readings.sort()
         

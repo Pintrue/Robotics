@@ -97,14 +97,18 @@ for i in range(len(points)):
     ori = (interface.global_x, interface.global_y, interface.global_theta)
     remaining_distance = distance(ori, next_dst)
     while True:
+        print "CURRENT POSITION: " + str(ori)
         next_mov = nextMove(ori, next_dst, interval)
-        interface.move_xy(next_mov[0], next_mov[1])
+        print "Moving to " + str(next_mov)
+        interface.navigateToWaypoint(next_mov[0], next_mov[1])
         sonar_reading = interface.ultrasonic_average_reading()
+        print "Sonar reading: " + str(sonar_reading)
         resampled_particles = resample(sample(ori, next_mov, sonar_reading))
         #displayParticles(resampled_particles)
         particles.data = resampled_particles
         particles.draw()
         current_pos = averageOf(resampled_particles)
         interface.global_x, interface.global_y, interface.global_theta, _ = current_pos
+        ori = (interface.global_x, interface.global_y, interface.global_theta)
         if next_mov == next_dst:
             break

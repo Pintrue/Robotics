@@ -10,7 +10,7 @@ class Init:
         
         self.motors = [0,1]
         
-        self.angle_ratio = 1.1 / 90
+        self.angle_ratio = 1.25 / 90
         
         self.move_ratio = 0.3
         
@@ -23,18 +23,18 @@ class Init:
 
         self.interface.motorEnable(self.motors[0])
         self.interface.motorEnable(self.motors[1])
-
+    #left wheel 
         motorParams0 = self.interface.MotorAngleControllerParameters()
         motorParams0.maxRotationAcceleration = 6.0
         motorParams0.maxRotationSpeed = 12.0
-        motorParams0.feedForwardGain = 255/20.0
+        motorParams0.feedForwardGain = 319/20 #255/20.0
         motorParams0.minPWM = 18.0
         motorParams0.pidParameters.minOutput = -255
         motorParams0.pidParameters.maxOutput = 255
         motorParams0.pidParameters.k_p = 670.0
         motorParams0.pidParameters.k_i = 400
         motorParams0.pidParameters.k_d = 200
-
+    #right wheel
         motorParams1 = self.interface.MotorAngleControllerParameters()
         motorParams1.maxRotationAcceleration = 6.0
         motorParams1.maxRotationSpeed = 12.0
@@ -84,6 +84,7 @@ class Init:
         self.interface.stopLogging("./refangle.txt")
     
     def turn(self, degree):
+        print "turning " + str(degree) + " degrees"
         self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
         while not self.interface.motorAngleReferencesReached(self.motors) :
             #motorAngles = interface.getMotorAngles(motors)
@@ -156,7 +157,7 @@ class Init:
             print("turning")
             self.right90deg()
             
-    def navigateToWaypoint(self, x, y):
+    def turnToPoint(self, x, y):
         delta_y = y - self.global_y
         delta_x = x - self.global_x
         target_theta = 0
@@ -195,6 +196,10 @@ class Init:
             delta_theta += 360
 
         self.turn(delta_theta)
+        return (delta_x, delta_y)
+            
+    def navigateToWaypoint(self, x, y):
+        delta_x, delta_y = self.turnToPoint(x, y)
         time.sleep(0.1)
         self.move_xy(delta_x, delta_y)
         
@@ -214,6 +219,17 @@ class Init:
             counter += 1
         print("counter is " + counter + " with time " + str(time.time() - start_time))
     
+    def ultrasonic_average_reading(self):
+        readings = []
+        for _ in range(10):
+            usReading = self.interface.getSensorValue(self.sensor_port)
+            if usReading:
+                readings.append(usReading[0] + 16)
+            time.sleep(0.05)
+        readings.sort()
+        
+        return readings[len(readings) / 2]
+
     def detect_bump(self):
         distance = 5
         while True:

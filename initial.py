@@ -23,7 +23,7 @@ class Init:
 
         self.interface.motorEnable(self.motors[0])
         self.interface.motorEnable(self.motors[1])
-	#left wheel 
+    #left wheel 
         motorParams0 = self.interface.MotorAngleControllerParameters()
         motorParams0.maxRotationAcceleration = 6.0
         motorParams0.maxRotationSpeed = 12.0
@@ -34,7 +34,7 @@ class Init:
         motorParams0.pidParameters.k_p = 670.0
         motorParams0.pidParameters.k_i = 400
         motorParams0.pidParameters.k_d = 200
-	#right wheel
+    #right wheel
         motorParams1 = self.interface.MotorAngleControllerParameters()
         motorParams1.maxRotationAcceleration = 6.0
         motorParams1.maxRotationSpeed = 12.0
@@ -219,9 +219,11 @@ class Init:
         for _ in range(10):
             usReading = self.interface.getSensorValue(self.sensor_port)
             if usReading:
-                readings.append(usReading)
+                readings.append(usReading[0])
             time.sleep(0.05)
-        return readings.sort()[len(readings)]
+        readings.sort()
+        
+        return readings[len(readings) / 2]
 
     def detect_bump(self):
         distance = 5

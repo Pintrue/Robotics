@@ -1,0 +1,239 @@
+import brickpi
+import time
+import math
+
+
+class Init:
+    def __init__(self):
+        self.interface = brickpi.Interface()
+        self.interface.initialize()
+        
+        self.motors = [0,1]
+        
+        self.angle_ratio = 1.2 / 90
+        
+        self.move_ratio = 0.3
+        
+        self.global_x = 0
+        
+        self.global_y = 0
+        
+        self.global_theta = 0
+        
+
+        self.interface.motorEnable(self.motors[0])
+        self.interface.motorEnable(self.motors[1])
+
+        motorParams0 = self.interface.MotorAngleControllerParameters()
+        motorParams0.maxRotationAcceleration = 6.0
+        motorParams0.maxRotationSpeed = 12.0
+        motorParams0.feedForwardGain = 255/20.0
+        motorParams0.minPWM = 18.0
+        motorParams0.pidParameters.minOutput = -255
+        motorParams0.pidParameters.maxOutput = 255
+        motorParams0.pidParameters.k_p = 670.0
+        motorParams0.pidParameters.k_i = 400
+        motorParams0.pidParameters.k_d = 200
+
+        motorParams1 = self.interface.MotorAngleControllerParameters()
+        motorParams1.maxRotationAcceleration = 6.0
+        motorParams1.maxRotationSpeed = 12.0
+        motorParams1.feedForwardGain = 255/20.0
+        motorParams1.minPWM = 18.0
+        motorParams1.pidParameters.minOutput = -255
+        motorParams1.pidParameters.maxOutput = 255
+        motorParams1.pidParameters.k_p = 570.0
+        motorParams1.pidParameters.k_i = 400
+        motorParams1.pidParameters.k_d = 200
+
+
+        self.interface.setMotorAngleControllerParameters(self.motors[0],motorParams0)
+        self.interface.setMotorAngleControllerParameters(self.motors[1],motorParams1)
+        
+        self.touch_port_left = 0
+        self.touch_port_right = 1
+        self.sensor_port = 3
+        self.interface.sensorEnable(self.touch_port_left, brickpi.SensorType.SENSOR_TOUCH)
+        self.interface.sensorEnable(self.touch_port_right, brickpi.SensorType.SENSOR_TOUCH)
+        self.interface.sensorEnable(self.sensor_port, brickpi.SensorType.SENSOR_ULTRASONIC);
+        
+    def init(self):
+        return self.interface
+    
+    def terminate(self):
+        self.interface.terminate()
+        
+    def motor_position(self):
+        # start logging time and reference angles of the two motors
+        self.interface.startLogging("./refangle.txt")
+        
+        while True:
+            angle = float(input("Enter a angle to rotate (in radians): "))
+
+            self.interface.increaseMotorAngleReferences(self.motors,[angle,angle])
+
+            while not self.interface.motorAngleReferencesReached(self.motors) :
+                motorAngles = self.interface.getMotorAngles(self.motors)
+                if motorAngles :
+                    print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+            time.sleep(0.1)
+
+        print "Destination reached!"
+    
+        # stop logging
+        self.interface.stopLogging("./refangle.txt")
+    
+    def turn(self, degree):
+        self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
+        while not self.interface.motorAngleReferencesReached(self.motors) :
+            #motorAngles = interface.getMotorAngles(motors)
+            time.sleep(0.1)
+        self.global_theta += degree
+        self.global_theta %= 360
+        
+        
+    def right90deg(self):
+        self.turn(-90)
+    
+    def left90deg(self):
+        self.turn(90)
+        
+    def stop(self):
+        self.interface.setMotorPwm(self.motors[0], 0)
+        self.interface.setMotorPwm(self.motors[1], 0)
+
+
+    def move(self, distance):
+        radian = distance * self.move_ratio
+        self.interface.increaseMotorAngleReferences(self.motors, [radian, radian])
+        while not self.interface.motorAngleReferencesReached(self.motors):
+            time.sleep(0.1)
+        self.global_x += distance * math.cos(math.radians(self.global_theta))
+        self.global_y += distance * math.sin(math.radians(self.global_theta))
+
+    def move_in_square(self):
+        for i in range(4):
+            print("moving forward")
+            self.move(40)
+            print("turning")
+            self.right90deg()
+
+    def turn_test(self):
+        self.left90deg()
+        time.sleep(1)
+        self.move(10)
+        self.right90deg()
+
+    def move_test(self):
+        self.move(40)
+        time.sleep(1)
+        self.move(-40)
+
+    def covariance_matrix(self, xs, ys):
+        n = len(xs)
+        xs = map(lambda x: float(x), xs)
+        ys = map(lambda x: float(x), ys)
+        mean_x = reduce(lambda x, y: x + y, xs) / n
+        mean_y = reduce(lambda x, y: x + y, ys) / n
+        x_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_x)**2, xs))/ n, 3)
+        y_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_y)**2, ys))/ n, 3)
+        zs = []
+        for i in range(n):
+            zs.append((xs[i] - mean_x) * (ys[i] - mean_y))
+        same_term = round(reduce(lambda x, y: x + y, zs) / n, 3)
+        return [[x_term, same_term],[same_term, y_term]]
+    
+    def move_in_square_particle(self):
+        for i in range(4):
+            print("moving forward")
+            for j in range(4):
+                self.move(10)
+                time.sleep(0.25)
+            print("turning")
+            self.right90deg()
+            
+    def navigateToWaypoint(self, x, y):
+        delta_y = y - self.global_y
+        delta_x = x - self.global_x
+        target_theta = 0
+        
+        if delta_x == 0 and delta_y == 0:
+            return
+        
+        
+        if delta_x == 0:
+            if delta_y > 0:
+                target_theta = 90
+            elif delta_y < 0:
+                target_theta = -90
+        elif delta_y == 0:
+            if delta_x > 0:
+                target_theta = 0
+            elif delta_x < 0:
+                target_theta = 180
+        else:
+            ratio = delta_y / delta_x
+            
+            if ratio < 0:
+                target_theta = math.atan(ratio)
+            else:
+                if delta_y < 0:
+                    target_theta = math.atan(ratio) + 180
+                else:
+                    target_theta = math.atan(ratio)
+                
+        delta_theta = target_theta - self.global_theta
+        
+        if delta_theta > 180:
+            delta_theta -= 360
+        elif delta_theta < -180:
+            delta_theta += 360
+
+        self.turn(delta_theta)
+        time.sleep(0.1)
+        self.move(math.sqrt(delta_y**2 + delta_x**2))
+        
+    def print_global(self):
+        print("x was " + str(self.global_x) + ", y was " + str(self.global_y) + ", theta was " + str(self.global_theta))
+    
+    def detect_bump(self):
+        distance = 5
+        while True:
+            bump1 = self.interface.getSensorValue(self.touch_port_left)
+            bump2 = self.interface.getSensorValue(self.touch_port_right)
+            usReading = self.interface.getSensorValue(self.sensor_port)
+            if usReading :
+                print(usReading[0])
+                if usReading[0] > 30:
+                    #interface.setMotorRotationSpeedReferences(motors, [speed, speed * 1.3])
+                    print("Turn towards wall")
+                else:
+                    #interface.setMotorRotationSpeedReferences(motors, [speed * 1.3, speed])
+                    print("Turn away from the wall")
+            else:
+                print "Failed US reading"
+            time.sleep(0.05)
+            if bump1 and bump2:
+                touch1 = bump1[0]
+                touch2 = bump2[0]
+                if touch1 and touch2:
+                    self.stop()
+                    print(touch1, touch2)
+                    self.move(-distance)
+                    rand = random.randint(0, 1)
+                    if rand:
+                        self.right90deg()
+                    else:
+                        self.left90deg()
+                elif touch1 and not touch2:
+                    self.stop()
+                    print(touch1, touch2)
+                    self.move(-distance)
+                    self.right90deg()
+                elif not touch1 and touch2:
+                    self.stop()
+                    print(touch1, touch2)
+                    self.move(-distance)
+                    self.left90deg()
+                else:
+                    self.interface.setMotorRotationSpeedReferences(self.motors, [self.speed, self.speed])

@@ -1,0 +1,97 @@
+import brickpi
+import time
+import math
+
+
+class Init:
+    def __init__(self):
+        self.interface = brickpi.Interface()
+        interface.initialize()
+        
+        motors = [0,1]
+
+        interface.motorEnable(motors[0])
+        interface.motorEnable(motors[1])
+
+        motorParams0 = interface.MotorAngleControllerParameters()
+        motorParams0.maxRotationAcceleration = 6.0
+        motorParams0.maxRotationSpeed = 12.0
+        motorParams0.feedForwardGain = 255/20.0
+        motorParams0.minPWM = 18.0
+        motorParams0.pidParameters.minOutput = -255
+        motorParams0.pidParameters.maxOutput = 255
+        motorParams0.pidParameters.k_p = 670.0
+        motorParams0.pidParameters.k_i = 400
+        motorParams0.pidParameters.k_d = 200
+
+        motorParams1 = interface.MotorAngleControllerParameters()
+        motorParams1.maxRotationAcceleration = 6.0
+        motorParams1.maxRotationSpeed = 12.0
+        motorParams1.feedForwardGain = 255/20.0
+        motorParams1.minPWM = 18.0
+        motorParams1.pidParameters.minOutput = -255
+        motorParams1.pidParameters.maxOutput = 255
+        motorParams1.pidParameters.k_p = 570.0
+        motorParams1.pidParameters.k_i = 400#1325.0
+        motorParams1.pidParameters.k_d = 200#100.59
+
+
+interface.setMotorAngleControllerParameters(motors[0],motorParams0)
+interface.setMotorAngleControllerParameters(motors[1],motorParams1)
+        
+
+interface=brickpi.Interface()
+interface.initialize()
+
+motors = [0,1]
+
+interface.motorEnable(motors[0])
+interface.motorEnable(motors[1])
+
+motorParams0 = interface.MotorAngleControllerParameters()
+motorParams0.maxRotationAcceleration = 6.0
+motorParams0.maxRotationSpeed = 12.0
+motorParams0.feedForwardGain = 255/20.0
+motorParams0.minPWM = 18.0
+motorParams0.pidParameters.minOutput = -255
+motorParams0.pidParameters.maxOutput = 255
+motorParams0.pidParameters.k_p = 670.0
+motorParams0.pidParameters.k_i = 400#1150.0
+motorParams0.pidParameters.k_d = 200
+
+motorParams1 = interface.MotorAngleControllerParameters()
+motorParams1.maxRotationAcceleration = 6.0
+motorParams1.maxRotationSpeed = 12.0
+motorParams1.feedForwardGain = 255/20.0
+motorParams1.minPWM = 18.0
+motorParams1.pidParameters.minOutput = -255
+motorParams1.pidParameters.maxOutput = 255
+motorParams1.pidParameters.k_p = 570.0
+motorParams1.pidParameters.k_i = 400#1325.0
+motorParams1.pidParameters.k_d = 200#100.59
+
+
+interface.setMotorAngleControllerParameters(motors[0],motorParams0)
+interface.setMotorAngleControllerParameters(motors[1],motorParams1)
+
+# start logging time and reference angles of the two motors
+interface.startLogging("./refangle.txt")
+
+while True:
+    angle = float(input("Enter a angle to rotate (in radians): "))
+
+    interface.increaseMotorAngleReferences(motors,[angle,angle])
+
+    while not interface.motorAngleReferencesReached(motors) :
+        motorAngles = interface.getMotorAngles(motors)
+        if motorAngles :
+            print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+        time.sleep(0.1)
+
+    print "Destination reached!"
+    
+# stop logging
+interface.stopLogging("./refangle.txt")
+
+
+interface.terminate()

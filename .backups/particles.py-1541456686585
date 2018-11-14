@@ -1,0 +1,7 @@
+from initial import *
+
+interface = Init()
+
+interface.move_square()
+
+interface.terminate()

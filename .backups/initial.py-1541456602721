@@ -1,0 +1,126 @@
+import brickpi
+import time
+import math
+
+
+class Init:
+    def __init__(self):
+        self.interface = brickpi.Interface()
+        self.interface.initialize()
+        
+        motors = [0,1]
+
+        self.interface.motorEnable(motors[0])
+        self.interface.motorEnable(motors[1])
+
+        motorParams0 = self.interface.MotorAngleControllerParameters()
+        motorParams0.maxRotationAcceleration = 6.0
+        motorParams0.maxRotationSpeed = 12.0
+        motorParams0.feedForwardGain = 255/20.0
+        motorParams0.minPWM = 18.0
+        motorParams0.pidParameters.minOutput = -255
+        motorParams0.pidParameters.maxOutput = 255
+        motorParams0.pidParameters.k_p = 670.0
+        motorParams0.pidParameters.k_i = 400
+        motorParams0.pidParameters.k_d = 200
+
+        motorParams1 = self.interface.MotorAngleControllerParameters()
+        motorParams1.maxRotationAcceleration = 6.0
+        motorParams1.maxRotationSpeed = 12.0
+        motorParams1.feedForwardGain = 255/20.0
+        motorParams1.minPWM = 18.0
+        motorParams1.pidParameters.minOutput = -255
+        motorParams1.pidParameters.maxOutput = 255
+        motorParams1.pidParameters.k_p = 570.0
+        motorParams1.pidParameters.k_i = 400
+        motorParams1.pidParameters.k_d = 200
+
+
+        self.interface.setMotorAngleControllerParameters(motors[0],motorParams0)
+        self.interface.setMotorAngleControllerParameters(motors[1],motorParams1)
+        
+    def init(self):
+        return self.interface
+    
+    def terminate(self):
+        self.interface.terminate()
+        
+    def motor_position(self):
+        # start logging time and reference angles of the two motors
+        self.interface.startLogging("./refangle.txt")
+        
+        while True:
+            angle = float(input("Enter a angle to rotate (in radians): "))
+
+            self.interface.increaseMotorAngleReferences(motors,[angle,angle])
+
+            while not self.interface.motorAngleReferencesReached(motors) :
+                motorAngles = self.interface.getMotorAngles(motors)
+                if motorAngles :
+                    print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+            time.sleep(0.1)
+
+        print "Destination reached!"
+    
+        # stop logging
+        self.interface.stopLogging("./refangle.txt")
+        
+    def right90deg(self):
+        self.interface.increaseMotorAngleReferences(motors,[math.pi * angle_ratio, math.pi * -angle_ratio])
+        while not self.interface.motorAngleReferencesReached(motors) :
+            #motorAngles = interface.getMotorAngles(motors)
+            time.sleep(0.1)
+    
+    def left90deg(self):
+        self.interface.increaseMotorAngleReferences(motors,[math.pi * -angle_ratio, math.pi * angle_ratio])
+        while not self.interface.motorAngleReferencesReached(motors) :
+            #motorAngles = interface.getMotorAngles(motors)
+            time.sleep(0.1)
+
+
+    def move(self, radian):
+        self.interface.increaseMotorAngleReferences(motors, [radian, radian])
+        while not self.interface.motorAngleReferencesReached(motors):
+            time.sleep(0.1)
+
+    def move_in_square(self):
+        for i in range(4):
+            print("moving forward")
+            self.move(11.0)
+            print("turning")
+            self.right90deg()
+
+    def turn_test(self):
+        left90deg()
+        time.sleep(1)
+        move(3)
+        right90deg()
+
+    def move_test(self):
+        move(11.6)
+        time.sleep(1)
+        move(-11.6)
+
+    def covariance_matrix(self, xs, ys):
+        n = len(xs)
+        xs = map(lambda x: float(x), xs)
+        ys = map(lambda x: float(x), ys)
+        mean_x = reduce(lambda x, y: x + y, xs) / n
+        mean_y = reduce(lambda x, y: x + y, ys) / n
+        x_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_x)**2, xs))/ n, 3)
+        y_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_y)**2, ys))/ n, 3)
+        zs = []
+        for i in range(n):
+            zs.append((xs[i] - mean_x) * (ys[i] - mean_y))
+        same_term = round(reduce(lambda x, y: x + y, zs) / n, 3)
+        return [[x_term, same_term],[same_term, y_term]]
+    
+    def move_in_square_particle(self):
+        for i in range(4):
+            print("moving forward")
+            for j in range(4):
+                self.move(11.0/4)
+                time.sleep(1)
+            print("turning")
+            right90deg()
+

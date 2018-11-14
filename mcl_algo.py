@@ -48,13 +48,17 @@ def calculate_likelihood(x, y, theta, z):
         pa = lines[i][1]
         pb = lines[i][2]
         m = calculate_m(x, y, theta, pa, pb)
+        #print "THIS IS " + str(m)
         if m >= 0 and is_on_the_line(pa, pb, calculate_intersect(x, y, theta, m)) and m < res:
             res = m
     sd = 1
     return math.exp(-(z - m)** 2 / 2 / sd ** 2)
 
 def normalise(ps):
-    tp = reduce(lambda x, y: x + y, map(lambda p: p[3], ps))
+    probs = map(lambda p: p[3], ps)
+    #print probs
+    tp = reduce(lambda x, y: x + y, probs)
+    print tp
     return [(x, y, theta, float(p) / tp) for (x, y, theta, p) in ps]
 
 def sample(ori, dest, z, sigma=0.55):
@@ -72,6 +76,7 @@ def sample(ori, dest, z, sigma=0.55):
         theta += random.gauss(0, sigma)
         theta %= 2 * math.pi
         p = calculate_likelihood(new_x, new_y, theta, z)
+        #print p
         particles.append((new_x,new_y,theta, p))
     return normalise(particles)
     # return particles
@@ -96,8 +101,8 @@ def resample(particles):
 
 #calculate mean of the resampled particals
 def averageOf(particles):
-    sum = reduce(lambda x, y: [sum(x) for x in zip(x, y)], particles)
-    return [x / 100 for x in sum]
+    p_sum = reduce(lambda x, y: [sum(x) for x in zip(x, y)], particles)
+    return [x / 100 for x in p_sum]
 
 #return index
 def binary_lookup(cdf, rnm):
@@ -124,8 +129,9 @@ def nextMove(ori, dst, interval):
     if d < interval:
         return dst
     else:
-        dx = float("{:.2f}".format(math.cos(ori[2] * math.pi / 180))) * interval
-        dy = float("{:.2f}".format(math.sin(ori[2] * math.pi / 180))) * interval
+        print ori[2]
+        dx = float("{:.2f}".format(math.cos(ori[2]))) * interval
+        dy = float("{:.2f}".format(math.sin(ori[2]))) * interval
         return (dx, dy)
 
 def displayParticles(particles):

@@ -79,7 +79,10 @@ mymap.add_wall((210,84,210,0));     # g
 mymap.add_wall((210,0,0,0));        # h
 mymap.draw()
 
+from initial import *
+
 points = [(180,30),(180,54),(138,54),(138,168),(114,168),(114,84),(84,84),(84,30)]
+initial = (84, 30)
 
 interface = Init()
 interface.global_x = initial[0]
@@ -95,7 +98,7 @@ for i in range(len(points)):
     remaining_distance = distance(ori, next_dst)
     while True:
         next_mov = nextMove(ori, next_dst, interval)
-        interface.move(next_mov)
+        interface.move_xy(next_mov[0], next_mov[1])
         sonar_reading = interface.ultrasonic_average_reading()
         resampled_particles = resample(sample(ori, next_mov, sonar_reading))
         #displayParticles(resampled_particles)

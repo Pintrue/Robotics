@@ -1,0 +1,67 @@
+import brickpi
+import time
+import math
+
+
+class Init:
+    def __init__(self):
+        self.interface = brickpi.Interface()
+        self.interface.initialize()
+        
+        motors = [0,1]
+
+        self.interface.motorEnable(motors[0])
+        self.interface.motorEnable(motors[1])
+
+        motorParams0 = self.interface.MotorAngleControllerParameters()
+        motorParams0.maxRotationAcceleration = 6.0
+        motorParams0.maxRotationSpeed = 12.0
+        motorParams0.feedForwardGain = 255/20.0
+        motorParams0.minPWM = 18.0
+        motorParams0.pidParameters.minOutput = -255
+        motorParams0.pidParameters.maxOutput = 255
+        motorParams0.pidParameters.k_p = 670.0
+        motorParams0.pidParameters.k_i = 400
+        motorParams0.pidParameters.k_d = 200
+
+        motorParams1 = self.interface.MotorAngleControllerParameters()
+        motorParams1.maxRotationAcceleration = 6.0
+        motorParams1.maxRotationSpeed = 12.0
+        motorParams1.feedForwardGain = 255/20.0
+        motorParams1.minPWM = 18.0
+        motorParams1.pidParameters.minOutput = -255
+        motorParams1.pidParameters.maxOutput = 255
+        motorParams1.pidParameters.k_p = 570.0
+        motorParams1.pidParameters.k_i = 400
+        motorParams1.pidParameters.k_d = 200
+
+
+        self.interface.setMotorAngleControllerParameters(motors[0],motorParams0)
+        self.interface.setMotorAngleControllerParameters(motors[1],motorParams1)
+        
+    def init(self):
+        return self.interface
+    
+    def terminate(self):
+        interface.terminate()
+        
+    def motor_position(self):
+        # start logging time and reference angles of the two motors
+        self.interface.startLogging("./refangle.txt")
+        
+        while True:
+            angle = float(input("Enter a angle to rotate (in radians): "))
+
+            self.interface.increaseMotorAngleReferences(motors,[angle,angle])
+
+            while not self.interface.motorAngleReferencesReached(motors) :
+                motorAngles = self.interface.getMotorAngles(motors)
+                if motorAngles :
+                    print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+            time.sleep(0.1)
+
+        print "Destination reached!"
+    
+        # stop logging
+        self.interface.stopLogging("./refangle.txt")
+

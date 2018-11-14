@@ -84,6 +84,7 @@ class Init:
         self.interface.stopLogging("./refangle.txt")
     
     def turn(self, degree):
+        print "turning " + str(degree) + " degrees"
         self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
         while not self.interface.motorAngleReferencesReached(self.motors) :
             #motorAngles = interface.getMotorAngles(motors)
@@ -156,7 +157,7 @@ class Init:
             print("turning")
             self.right90deg()
             
-    def navigateToWaypoint(self, x, y):
+    def turnToPoint(self, x, y):
         delta_y = y - self.global_y
         delta_x = x - self.global_x
         target_theta = 0
@@ -195,6 +196,10 @@ class Init:
             delta_theta += 360
 
         self.turn(delta_theta)
+        return (delta_x, delta_y)
+            
+    def navigateToWaypoint(self, x, y):
+        delta_x, delta_y = self.turnToPoint(x, y)
         time.sleep(0.1)
         self.move_xy(delta_x, delta_y)
         

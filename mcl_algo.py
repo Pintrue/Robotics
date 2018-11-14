@@ -62,7 +62,7 @@ def normalise(ps):
     print "Total prob: " + str(tp)
     return [(x, y, theta, float(p) / tp) for (x, y, theta, p) in ps]
 
-def sample(ori, dest, z, sigma=0.55): #0.55
+def sample(ori, dest, z, sigma=0.08): #0.55
     dx = dest[0] - ori[0]
     dy = dest[1] - ori[1]
     theta = ori[2]
@@ -74,7 +74,7 @@ def sample(ori, dest, z, sigma=0.55): #0.55
         e = random.gauss(0, sigma)
         new_x = x + (dist + e) * math.cos(theta)
         new_y = y + (dist + e) * math.sin(theta)
-        new_theta = theta + random.gauss(0, 0.01)
+        new_theta = theta + random.gauss(0, sigma)
 #        new_theta %= 2 * math.pi
         p = calculate_likelihood(new_x, new_y, new_theta, z)
         #print p
@@ -87,7 +87,7 @@ def resample(particles):
     cdf = [0]
     resampled_particles = []
     for (x, y, t, p) in particles:
-        print (x, y, t, p)
+        #print (x, y, t, p)
         acc += p
         cdf.append(acc)
 
@@ -126,12 +126,19 @@ def binary_lookup(cdf, rnm):
 def distance(a, b):
     return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
 
+def thetaOfLine(ori, dst):
+    x1 = ori[0]
+    y1 = ori[1]
+    x2 = dst[0]
+    y2 = dst[1]
+
 def nextMove(ori, dst, interval):
     d = distance(ori, dst)
+    print "distance away: " + str(d)
     if d < interval:
         return dst
     else:
-        print ori[2]
+        theta = ori[2]
         dx = float("{:.2f}".format(math.cos(ori[2]))) * interval
         dy = float("{:.2f}".format(math.sin(ori[2]))) * interval
         return (dx + ori[0], dy + ori[1])

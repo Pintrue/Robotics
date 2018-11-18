@@ -96,7 +96,6 @@ particles = Particles()
 for i in range(len(points)):
     next_dst = points[i]
     ori = (interface.global_x, interface.global_y, interface.global_theta)
-    remaining_distance = distance(ori, next_dst)
     print "to the next point" + str(next_dst) + " from " + str(ori)
     while True:
         interface.turnToPoint(next_dst[0], next_dst[1])

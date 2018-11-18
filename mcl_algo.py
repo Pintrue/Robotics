@@ -52,8 +52,11 @@ def calculate_likelihood(x, y, theta, z):
         if m >= 0 and is_on_the_line(pa, pb, calculate_intersect(x, y, theta, m)) and m < res:
             res = m
         #print "z and m for particle " + str(i) + " is:" + str(z) + " and " + str(m)
-    sd = 0.2
-    return math.exp(-(z - m)** 2 / 2 / sd ** 2)
+    #print "z and m for particle " + str((x,y, theta)) + " is " + str(z) + " and " + str(res) 
+    sd = 1
+    p = math.exp(-(z - res)** 2 / 2 / sd ** 2)
+   # print "probability: " + str(p)
+    return p
 
 def normalise(ps):
     probs = map(lambda p: p[3], ps)
@@ -62,7 +65,7 @@ def normalise(ps):
     print "Total prob: " + str(tp)
     return [(x, y, theta, float(p) / tp) for (x, y, theta, p) in ps]
 
-def sample(ori, dest, z, sigma=0.08): #0.55
+def sample(ori, dest, z, sigma=3): #0.55
     dx = dest[0] - ori[0]
     dy = dest[1] - ori[1]
     theta = ori[2]
@@ -72,9 +75,12 @@ def sample(ori, dest, z, sigma=0.08): #0.55
     y = ori[1]
     for _ in range(100):
         e = random.gauss(0, sigma)
-        new_x = x + (dist + e) * math.cos(math.radians(theta))
-        new_y = y + (dist + e) * math.sin(math.radians(theta))
-        new_theta = theta + random.gauss(0, sigma)
+        f = random.gauss(0, sigma)
+        #new_x = x + (dist + e) * math.cos(math.radians(theta))
+        #new_y = y + (dist + e) * math.sin(math.radians(theta))
+        new_x = x + dx + e
+        new_y = y + dy + f
+        new_theta = theta + random.gauss(0, 9)
 #        new_theta %= 2 * math.pi
         p = calculate_likelihood(new_x, new_y, new_theta, z)
         #print p
@@ -94,7 +100,6 @@ def resample(particles):
     tp = cdf[len(cdf) - 1]
     for _ in range(100):
         rnm = random.uniform(0, tp)
-        # TODO: wo ri ni xue ma
         idx = binary_lookup(cdf, rnm)
         x, y, theta, _ = particles[idx]
         resampled_particles.append((x, y, theta, 0.01))

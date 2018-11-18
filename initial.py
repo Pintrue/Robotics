@@ -10,7 +10,8 @@ class Init:
         
         self.motors = [0,1]
         
-        self.angle_ratio = 1.25 / 90
+        self.angle_ratio = 1.05 / 90
+        self.angle_ratio_right = 1.0 / 90
         
         self.move_ratio = 0.3
         
@@ -27,11 +28,11 @@ class Init:
         motorParams0 = self.interface.MotorAngleControllerParameters()
         motorParams0.maxRotationAcceleration = 6.0
         motorParams0.maxRotationSpeed = 12.0
-        motorParams0.feedForwardGain = 319/20 #255/20.0
+        motorParams0.feedForwardGain = 255/20.0 #319/20
         motorParams0.minPWM = 18.0
         motorParams0.pidParameters.minOutput = -255
         motorParams0.pidParameters.maxOutput = 255
-        motorParams0.pidParameters.k_p = 670.0
+        motorParams0.pidParameters.k_p = 675
         motorParams0.pidParameters.k_i = 400
         motorParams0.pidParameters.k_d = 200
     #right wheel
@@ -42,7 +43,7 @@ class Init:
         motorParams1.minPWM = 18.0
         motorParams1.pidParameters.minOutput = -255
         motorParams1.pidParameters.maxOutput = 255
-        motorParams1.pidParameters.k_p = 570.0
+        motorParams1.pidParameters.k_p = 675
         motorParams1.pidParameters.k_i = 400
         motorParams1.pidParameters.k_d = 200
 
@@ -85,7 +86,11 @@ class Init:
     
     def turn(self, degree):
         print "turning " + str(degree) + " degrees"
-        self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
+        
+        if degree < 0:
+            self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio_right * degree, math.pi * self.angle_ratio_right * degree])
+        else:
+            self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
         while not self.interface.motorAngleReferencesReached(self.motors) :
             #motorAngles = interface.getMotorAngles(motors)
             time.sleep(0.1)
@@ -157,6 +162,14 @@ class Init:
             print("turning")
             self.right90deg()
             
+    def adjustArctan(self, delta_y, delta_x):
+        ratio = delta_y / delta_x
+        angle = math.degrees(math.atan(ratio))
+        if delta_x < 0:
+            angle += 180
+        return angle
+    
+    
     def turnToPoint(self, x, y):
         delta_y = y - self.global_y
         delta_x = x - self.global_x
@@ -177,16 +190,15 @@ class Init:
             elif delta_x < 0:
                 target_theta = 180
         else:
-            ratio = delta_y / delta_x
-            angle = math.degrees(math.atan(ratio))
+            target_theta = self.adjustArctan(delta_y, delta_x)
             
-            if ratio < 0:
-                target_theta = angle
-            else:
-                if delta_y < 0:
-                    target_theta = angle + 180
-                else:
-                    target_theta = angle
+            #if ratio < 0:
+            #    target_theta = angle
+            #else:
+            #    if delta_y < 0:
+            #        target_theta = angle + 180
+            #    else:
+            #        target_theta = angle
                 
         delta_theta = target_theta - self.global_theta
         
@@ -224,7 +236,7 @@ class Init:
         for _ in range(10):
             usReading = self.interface.getSensorValue(self.sensor_port)
             if usReading:
-                readings.append(usReading[0] + 16)
+                readings.append(usReading[0])
             time.sleep(0.05)
         readings.sort()
         

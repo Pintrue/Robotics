@@ -36,10 +36,10 @@ def is_on_the_line(pa, pb, p):
     py = p[1]
     #horizontal
     if ay == by:
-        return ax < px < bx if bx > ax else bx < px < ax
+        return ax <= px <= bx if bx > ax else bx <= px <= ax
     #vertical or oblique
     else:
-        return ay < py < by if by > ay else by < py < ay
+        return ay <= py <= by if by > ay else by <= py <= ay
 
 def calculate_correct_m(x, y, theta):
     res = float('inf')

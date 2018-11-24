@@ -96,7 +96,11 @@ standardHist = waypoints_readings(int(360 / steps), points)
 
 #localize the car
 fstHist = interface.depth_histogram(8)
+interface.reset_sensor()
 pointIdx = localize(fstHist, standardHist)
+
+print "actual histogram being: " + str(fstHist)
+print "standard histogram being "+ str(standardHist)
 
 #recalculate the route
 newRoute = shiftHistLeft(points, pointIdx)

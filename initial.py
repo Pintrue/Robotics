@@ -8,10 +8,11 @@ class Init:
         self.interface = brickpi.Interface()
         self.interface.initialize()
         
-        self.motors = [0,1]
+        self.motors = [0,1,3]
         
         self.angle_ratio = 1.05 / 90
         self.angle_ratio_right = 1.0 / 90
+        self.sensor_angle_ratio = 0.9 / 90
         
         self.move_ratio = 0.3
         
@@ -21,9 +22,12 @@ class Init:
         
         self.global_theta = 0
         
+        self.global_sensor_theta = 0
+        
 
         self.interface.motorEnable(self.motors[0])
         self.interface.motorEnable(self.motors[1])
+        self.interface.motorEnable(self.motors[2])
     #left wheel 
         motorParams0 = self.interface.MotorAngleControllerParameters()
         motorParams0.maxRotationAcceleration = 6.0
@@ -47,9 +51,20 @@ class Init:
         motorParams1.pidParameters.k_i = 400
         motorParams1.pidParameters.k_d = 200
 
+        sensorParam = self.interface.MotorAngleControllerParameters()
+        sensorParam.maxRotationAcceleration = 6.0
+        sensorParam.maxRotationSpeed = 12.0
+        sensorParam.feedForwardGain = 255/20.0
+        sensorParam.minPWM = 18.0
+        sensorParam.pidParameters.minOutput = -255
+        sensorParam.pidParameters.maxOutput = 255
+        sensorParam.pidParameters.k_p = 675
+        sensorParam.pidParameters.k_i = 400
+        sensorParam.pidParameters.k_d = 200
 
         self.interface.setMotorAngleControllerParameters(self.motors[0],motorParams0)
         self.interface.setMotorAngleControllerParameters(self.motors[1],motorParams1)
+        self.interface.setMotorAngleControllerParameters(self.motors[2],sensorParam)
         
         self.touch_port_left = 0
         self.touch_port_right = 1
@@ -71,10 +86,10 @@ class Init:
         while True:
             angle = float(input("Enter a angle to rotate (in radians): "))
 
-            self.interface.increaseMotorAngleReferences(self.motors,[angle,angle])
+            self.interface.increaseMotorAngleReferences(self.motors[:2],[angle,angle])
 
-            while not self.interface.motorAngleReferencesReached(self.motors) :
-                motorAngles = self.interface.getMotorAngles(self.motors)
+            while not self.interface.motorAngleReferencesReached(self.motors[:2]) :
+                motorAngles = self.interface.getMotorAngles(self.motors[:2])
                 if motorAngles :
                     print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
             time.sleep(0.1)
@@ -88,15 +103,18 @@ class Init:
         print "turning " + str(degree) + " degrees"
         
         if degree < 0:
-            self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio_right * degree, math.pi * self.angle_ratio_right * degree])
+            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio_right * degree, math.pi * self.angle_ratio_right * degree])
         else:
-            self.interface.increaseMotorAngleReferences(self.motors,[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
-        while not self.interface.motorAngleReferencesReached(self.motors) :
+            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
+        while not self.interface.motorAngleReferencesReached(self.motors[:2]) :
             #motorAngles = interface.getMotorAngles(motors)
             time.sleep(0.1)
         self.global_theta += degree
         self.global_theta %= 360
-        
+    
+    def turn_sensor(self, degree):
+        self.interface.increaseMotorAngleReferences(self.motors,[math.pi * self.sensor_angle_ratio * degree])
+        self.global_theta += degree
         
     def right90deg(self):
         self.turn(-90)
@@ -111,8 +129,8 @@ class Init:
 
     def move(self, distance):
         radian = distance * self.move_ratio
-        self.interface.increaseMotorAngleReferences(self.motors, [radian, radian])
-        while not self.interface.motorAngleReferencesReached(self.motors):
+        self.interface.increaseMotorAngleReferences(self.motors[:2], [radian, radian])
+        while not self.interface.motorAngleReferencesReached(self.motors[:2]):
             time.sleep(0.1)
     
     def move_xy(self, delta_x, delta_y):
@@ -282,4 +300,4 @@ class Init:
                     self.move(-distance)
                     self.left90deg()
                 else:
-                    self.interface.setMotorRotationSpeedReferences(self.motors, [self.speed, self.speed])
+                    self.interface.setMotorRotationSpeedReferences(self.motors[:2], [self.speed, self.speed])

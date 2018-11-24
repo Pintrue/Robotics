@@ -43,6 +43,7 @@ def is_on_the_line(pa, pb, p):
 
 def calculate_correct_m(x, y, theta):
     res = float('inf')
+    res_i = float('inf')
     for i in range(len(lines)):
         pa = lines[i][1]
         pb = lines[i][2]
@@ -50,7 +51,9 @@ def calculate_correct_m(x, y, theta):
         #print "THIS IS " + str(m)
         if m >= 0 and is_on_the_line(pa, pb, calculate_intersect(x, y, theta, m)) and m < res:
             res = m
-    return res
+            res_i = i
+            
+    return res_i, res
 
 
 def calculate_likelihood(x, y, theta, z):
@@ -64,7 +67,7 @@ def calculate_likelihood(x, y, theta, z):
          #   res = m
         #print "z and m for particle " + str(i) + " is:" + str(z) + " and " + str(m)
     #print "z and m for particle " + str((x,y, theta)) + " is " + str(z) + " and " + str(res) 
-    res = calculate_correct_m(x, y, theta)
+    res, _ = calculate_correct_m(x, y, theta)
     sd = 1
     p = math.exp(-(z - res)** 2 / 2 / sd ** 2)
     # print "probability: " + str(p)

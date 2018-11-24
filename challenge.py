@@ -92,12 +92,15 @@ interface.global_sensor_theta = 0
 steps = 8
 
 particles = Particles()
-standardHist = waypoints_readings(int(360 / steps), points)
+standardHist = waypoints_readings(points, int(360 / steps))
 
 #localize the car
 fstHist = interface.depth_histogram(8)
 interface.reset_sensor()
-pointIdx = localize(fstHist, standardHist)
+pointIdx, shift = localize(fstHist, standardHist)
+
+#shift measurement
+shiftedM = shiftHistLeft(fstHist, shift)
 
 print "actual histogram being: " + str(fstHist)
 print "standard histogram being "+ str(standardHist)

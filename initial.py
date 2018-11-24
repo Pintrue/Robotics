@@ -8,27 +8,24 @@ class Init:
         self.interface = brickpi.Interface()
         self.interface.initialize()
         
+        #0 and 1 are for wheels, 3 is for sonar sensor on the top
         self.motors = [0,1,3]
         
         self.angle_ratio = 1.05 / 90
-        self.angle_ratio_right = 1.0 / 90
-        self.sensor_angle_ratio = 0.9 / 90
-        
+        self.sensor_angle_ratio = 0.53 / 90
         self.move_ratio = 0.3
         
+        #current status (positon, angle)
         self.global_x = 0
-        
         self.global_y = 0
-        
         self.global_theta = 0
-        
         self.global_sensor_theta = 0
         
 
         self.interface.motorEnable(self.motors[0])
         self.interface.motorEnable(self.motors[1])
         self.interface.motorEnable(self.motors[2])
-    #left wheel 
+        #left wheel 
         motorParams0 = self.interface.MotorAngleControllerParameters()
         motorParams0.maxRotationAcceleration = 6.0
         motorParams0.maxRotationSpeed = 12.0
@@ -39,7 +36,7 @@ class Init:
         motorParams0.pidParameters.k_p = 675
         motorParams0.pidParameters.k_i = 400
         motorParams0.pidParameters.k_d = 200
-    #right wheel
+        #right wheel
         motorParams1 = self.interface.MotorAngleControllerParameters()
         motorParams1.maxRotationAcceleration = 6.0
         motorParams1.maxRotationSpeed = 12.0
@@ -51,6 +48,7 @@ class Init:
         motorParams1.pidParameters.k_i = 400
         motorParams1.pidParameters.k_d = 200
 
+        #sonar sensor on top
         sensorParam = self.interface.MotorAngleControllerParameters()
         sensorParam.maxRotationAcceleration = 6.0
         sensorParam.maxRotationSpeed = 12.0
@@ -58,20 +56,23 @@ class Init:
         sensorParam.minPWM = 18.0
         sensorParam.pidParameters.minOutput = -255
         sensorParam.pidParameters.maxOutput = 255
-        sensorParam.pidParameters.k_p = 675
-        sensorParam.pidParameters.k_i = 400
-        sensorParam.pidParameters.k_d = 200
+        sensorParam.pidParameters.k_p = 300
+        sensorParam.pidParameters.k_i = 150
+        sensorParam.pidParameters.k_d = 80
 
         self.interface.setMotorAngleControllerParameters(self.motors[0],motorParams0)
         self.interface.setMotorAngleControllerParameters(self.motors[1],motorParams1)
         self.interface.setMotorAngleControllerParameters(self.motors[2],sensorParam)
-        
+
+        self.sensor_port = 3
+        self.interface.sensorEnable(self.sensor_port, brickpi.SensorType.SENSOR_ULTRASONIC)
+
+        '''
         self.touch_port_left = 0
         self.touch_port_right = 1
-        self.sensor_port = 3
         self.interface.sensorEnable(self.touch_port_left, brickpi.SensorType.SENSOR_TOUCH)
         self.interface.sensorEnable(self.touch_port_right, brickpi.SensorType.SENSOR_TOUCH)
-        self.interface.sensorEnable(self.sensor_port, brickpi.SensorType.SENSOR_ULTRASONIC);
+        '''
         
     def init(self):
         return self.interface
@@ -103,7 +104,7 @@ class Init:
         print "turning " + str(degree) + " degrees"
         
         if degree < 0:
-            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio_right * degree, math.pi * self.angle_ratio_right * degree])
+            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
         else:
             self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
         while not self.interface.motorAngleReferencesReached(self.motors[:2]) :
@@ -113,8 +114,8 @@ class Init:
         self.global_theta %= 360
     
     def turn_sensor(self, degree):
-        self.interface.increaseMotorAngleReferences(self.motors,[math.pi * self.sensor_angle_ratio * degree])
-        self.global_theta += degree
+        self.interface.increaseMotorAngleReferences(self.motors[2:],[math.pi * self.sensor_angle_ratio * degree])
+        self.global_sensor_theta += degree
         
     def right90deg(self):
         self.turn(-90)
@@ -138,43 +139,11 @@ class Init:
         self.move(distance)
         self.global_x += delta_x
         self.global_y += delta_y
-
-    def move_in_square(self):
-        for i in range(4):
-            print("moving forward")
-            self.move(40)
-            print("turning")
-            self.right90deg()
-
-    def turn_test(self):
-        self.left90deg()
-        time.sleep(1)
-        self.move(10)
-        self.right90deg()
-
-    def move_test(self):
-        self.move(40)
-        time.sleep(1)
-        self.move(-40)
-
-    def covariance_matrix(self, xs, ys):
-        n = len(xs)
-        xs = map(lambda x: float(x), xs)
-        ys = map(lambda x: float(x), ys)
-        mean_x = reduce(lambda x, y: x + y, xs) / n
-        mean_y = reduce(lambda x, y: x + y, ys) / n
-        x_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_x)**2, xs))/ n, 3)
-        y_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_y)**2, ys))/ n, 3)
-        zs = []
-        for i in range(n):
-            zs.append((xs[i] - mean_x) * (ys[i] - mean_y))
-        same_term = round(reduce(lambda x, y: x + y, zs) / n, 3)
-        return [[x_term, same_term],[same_term, y_term]]
     
     def move_in_square_particle(self):
-        for i in range(4):
+        for _ in range(4):
             print("moving forward")
-            for j in range(4):
+            for _ in range(4):
                 self.move(10)
                 time.sleep(0.25)
             print("turning")
@@ -234,7 +203,7 @@ class Init:
         self.move_xy(delta_x, delta_y)
         
     def print_global(self):
-        print("x was " + str(self.global_x) + ", y was " + str(self.global_y) + ", theta was " + str(self.global_theta))
+        print("x was " + str(self.global_x) + ", y was " + str(self.global_y) + ", theta was " + str(self.global_theta) + ", sensor at angle " + str(self.global_sensor_theta))
     
     def ultrasonic(self):
         counter = 0
@@ -260,6 +229,41 @@ class Init:
         
         return readings[len(readings) / 2]
 
+    '''
+    previous assessment
+    '''
+    def covariance_matrix(self, xs, ys):
+        n = len(xs)
+        xs = map(lambda x: float(x), xs)
+        ys = map(lambda x: float(x), ys)
+        mean_x = reduce(lambda x, y: x + y, xs) / n
+        mean_y = reduce(lambda x, y: x + y, ys) / n
+        x_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_x)**2, xs))/ n, 3)
+        y_term = round(reduce(lambda x, y: x + y, map(lambda x: (x - mean_y)**2, ys))/ n, 3)
+        zs = []
+        for i in range(n):
+            zs.append((xs[i] - mean_x) * (ys[i] - mean_y))
+        same_term = round(reduce(lambda x, y: x + y, zs) / n, 3)
+        return [[x_term, same_term],[same_term, y_term]]
+
+    def move_in_square(self):
+        for _ in range(4):
+            print("moving forward")
+            self.move(40)
+            print("turning")
+            self.right90deg()
+
+    def turn_test(self):
+        self.left90deg()
+        time.sleep(1)
+        self.move(10)
+        self.right90deg()
+
+    def move_test(self):
+        self.move(40)
+        time.sleep(1)
+        self.move(-40)
+'''
     def detect_bump(self):
         distance = 5
         while True:
@@ -301,3 +305,4 @@ class Init:
                     self.left90deg()
                 else:
                     self.interface.setMotorRotationSpeedReferences(self.motors[:2], [self.speed, self.speed])
+'''

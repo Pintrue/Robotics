@@ -5,8 +5,8 @@ from initial import *
 interface = Init()
 
 while True:
-    a = float(input("Input angle: "))
+    a = int(input("Input angle: "))
+    print "turning " + str(a)
     interface.turn_sensor(a)
-    interface.ultrasonic()
 
 interface.terminate()

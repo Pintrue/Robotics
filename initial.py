@@ -115,11 +115,30 @@ class Init:
         self.global_theta %= 360
     
     def turn_sensor(self, degree):
+        if degree == 0:
+            return
         self.interface.increaseMotorAngleReferences(self.motors[2:],[math.pi * self.sensor_angle_ratio * degree])
         while not self.interface.motorAngleReferencesReached(self.motors[2:]):
-            reading = self.ultrasonic_direct_reading()
-            print "sensor reading: " + str(reading)
+            time.sleep(0.05)
         self.global_sensor_theta += degree
+
+    def reset_sensor(self):
+        degree = -self.global_sensor_theta
+        self.interface.increaseMotorAngleReferences(self.motors[2:],[math.pi * self.sensor_angle_ratio * degree])
+        while not self.interface.motorAngleReferencesReached(self.motors[2:]):
+            time.sleep(0.05)
+        self.global_sensor_theta = 0
+    
+    #return depth to angle histogram, steps indicate number of angles at which sensor reading is taken
+    def depth_histogram(self, steps):
+        stride = int(360 / steps)
+        fstReading = self.ultrasonic_average_reading()
+        hist = [fstReading]
+        for _ in range(1, steps):
+            self.turn_sensor(stride)
+            nxtReading = self.ultrasonic_average_reading()
+            hist.append(nxtReading)
+        return hist
         
     def right90deg(self):
         self.turn(-90)

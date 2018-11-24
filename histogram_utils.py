@@ -1,4 +1,4 @@
-
+from mcl_algo import lines
 
 def shiftHistLeft(hist, n):
     shift = n % len(hist)
@@ -15,12 +15,14 @@ def localize(actualHist, standardHists):
     histSize = len(actualHist)
     sampleSize = len(standardHists)
     errors = [0] * sampleSize
+    shifts = [0] * sampleSize
     for idx in range(0, sampleSize):
         nxtStandardHist = standardHists[idx]
         minError = float('inf')
         for shift in range(0, histSize):
             newError = histError(shiftHistLeft(actualHist, shift), nxtStandardHist)
-            minError = minError if minError < newError else newError
+            minError, shifts[idx] = (minError, shifts[idx]) if minError < newError else (newError, shift)
         print "histError at " + str(idx) + " is: " + str(minError)
         errors[idx] = minError
-    return errors.index(min(errors))
+        minimalErrIdx = errors.index(min(errors))
+    return (minimalErrIdx, shifts[minimalErrIdx])

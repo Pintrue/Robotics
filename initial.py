@@ -11,7 +11,8 @@ class Init:
         #0 and 1 are for wheels, 3 is for sonar sensor on the top
         self.motors = [0,1,3]
         
-        self.angle_ratio = 1.05 / 90
+        self.angle_ratio_left = 1.05 / 90
+        self.angle_ratio_right = 1.0 / 90
         self.sensor_angle_ratio = 0.53 / 90
         self.move_ratio = 0.3
         
@@ -39,12 +40,12 @@ class Init:
         #right wheel
         motorParams1 = self.interface.MotorAngleControllerParameters()
         motorParams1.maxRotationAcceleration = 6.0
-        motorParams1.maxRotationSpeed = 12.0
-        motorParams1.feedForwardGain = 255/20.0
+        motorParams1.maxRotationSpeed = 16.3
+        motorParams1.feedForwardGain = 300/20.0
         motorParams1.minPWM = 18.0
         motorParams1.pidParameters.minOutput = -255
         motorParams1.pidParameters.maxOutput = 255
-        motorParams1.pidParameters.k_p = 675
+        motorParams1.pidParameters.k_p = 900
         motorParams1.pidParameters.k_i = 400
         motorParams1.pidParameters.k_d = 200
 
@@ -104,9 +105,9 @@ class Init:
         print "turning " + str(degree) + " degrees"
         
         if degree < 0:
-            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
+            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio_left * degree, math.pi * self.angle_ratio_right * degree])
         else:
-            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio * degree, math.pi * self.angle_ratio * degree])
+            self.interface.increaseMotorAngleReferences(self.motors[:2],[math.pi * -self.angle_ratio_left * degree, math.pi * self.angle_ratio_right * degree])
         while not self.interface.motorAngleReferencesReached(self.motors[:2]) :
             #motorAngles = interface.getMotorAngles(motors)
             time.sleep(0.1)
@@ -115,6 +116,9 @@ class Init:
     
     def turn_sensor(self, degree):
         self.interface.increaseMotorAngleReferences(self.motors[2:],[math.pi * self.sensor_angle_ratio * degree])
+        while not self.interface.motorAngleReferencesReached(self.motors[2:]):
+            reading = self.ultrasonic_direct_reading()
+            print "sensor reading: " + str(reading)
         self.global_sensor_theta += degree
         
     def right90deg(self):
@@ -228,7 +232,17 @@ class Init:
         readings.sort()
         
         return readings[len(readings) / 2]
-
+    
+    def ultrasonic_direct_reading(self):
+        usReading = 0
+        for _ in range(10):
+            usReading = self.interface.getSensorValue(self.sensor_port)
+            if usReading:
+                break
+        
+        return usReading[0]
+    
+    
     '''
     previous assessment
     '''

@@ -89,13 +89,26 @@ points = [(84, 30), (180, 30), (180, 54), (138, 54), (138, 168)]
 interface = Init()
 interface.global_theta = 0
 interface.global_sensor_theta = 0
-steps = 8
+steps = 4
 
 particles = Particles()
 standardHist = waypoints_readings(points, int(360 / steps))
 
+p1_reading = [128, 255, 137, 255, 82, 33, 28, 33]
+p2_reading = [31, 33, 52, 255, 179, 33, 29, 33]
+p3_reading = [31, 32, 28, 32, 178, 57, 52, 35]
+p4_reading = [73, 255, 155, 255, 137, 55, 51, 77]
+p5_reading = [30, 33, 40, 44, 48, 255, 167, 33]
+
+all_readings = []
+all_readings.append(p1_reading)
+all_readings.append(p2_reading)
+all_readings.append(p3_reading)
+all_readings.append(p4_reading)
+all_readings.append(p5_reading)
+
 #localize the car
-fstHist = interface.depth_histogram(8)
+fstHist = interface.depth_histogram(steps)
 interface.reset_sensor()
 pointIdx, shift = localize(fstHist, standardHist)
 
@@ -104,6 +117,7 @@ shiftedM = shiftHistLeft(fstHist, shift)
 
 print "actual histogram being: " + str(fstHist)
 print "standard histogram being "+ str(standardHist)
+print "real readings being " + str(all_readings)
 
 #recalculate the route
 newRoute = shiftHistLeft(points, pointIdx)
@@ -112,6 +126,7 @@ interface.global_x = newRoute[0][0]
 interface.global_y = newRoute[0][1]
 
 print(interface.global_x, interface.global_y)
+
 
 '''
 for i in range(len(points)):

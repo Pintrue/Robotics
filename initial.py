@@ -51,15 +51,15 @@ class Init:
 
         #sonar sensor on top
         sensorParam = self.interface.MotorAngleControllerParameters()
-        sensorParam.maxRotationAcceleration = 6.0
-        sensorParam.maxRotationSpeed = 12.0
+        sensorParam.maxRotationAcceleration = 10.0
+        sensorParam.maxRotationSpeed = 24.0
         sensorParam.feedForwardGain = 255/20.0
         sensorParam.minPWM = 18.0
         sensorParam.pidParameters.minOutput = -255
         sensorParam.pidParameters.maxOutput = 255
         sensorParam.pidParameters.k_p = 300
-        sensorParam.pidParameters.k_i = 150
-        sensorParam.pidParameters.k_d = 80
+        sensorParam.pidParameters.k_i = 250
+        sensorParam.pidParameters.k_d = 100
 
         self.interface.setMotorAngleControllerParameters(self.motors[0],motorParams0)
         self.interface.setMotorAngleControllerParameters(self.motors[1],motorParams1)

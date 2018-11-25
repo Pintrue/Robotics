@@ -41,7 +41,7 @@ def possibleAngles(p, m):
         pa = lines[i][1]
         pb = lines[i][2]
         angles = calculateAngle(p[0], p[1], m, pa, pb)
-        #print "line " + str(lines[i]) + ": " + str(angles)
+        print "line " + str(lines[i]) + ": " + str(angles)
         res += angles
     #print "before filtering " + str(res)
     toBeRemoved = []
@@ -68,9 +68,11 @@ def calculateAngle(x, y, m, pa, pb):
     const_b = pa_x - pb_x
     const_c = (const_a * (pa_x - x) + const_b * (pa_y - y)) / m
     const_d_sqr = const_a**2 + const_b**2 - const_c**2
-    if const_d_sqr > 0:
+    if const_d_sqr >= 0:
         const_d = math.sqrt(const_d_sqr)
         if const_b == 0:
+            #print "const_c " + str(const_c)
+            #print "const_a " + str(const_a)
             res1 = math.acos(float(const_c) / const_a)
             res2 = -res1
             return [math.degrees(res1), math.degrees(res2)]
@@ -83,8 +85,9 @@ def calculateAngle(x, y, m, pa, pb):
         res1 = math.atan(float(const_a) / const_b) + math.atan(float(const_d) / const_c)
         res2 = math.atan(float(const_a) / const_b) - math.atan(float(const_d) / const_c)
         return [math.degrees(res1), math.degrees(res2)]
+    #print "const_d: " + str(const_d_sqr)
     return []
 
-# m = 70
-# p = (180, 30)
-# print(possibleAngles(p, m))
+m = 72
+p = (138, 54)
+print(possibleAngles(p, m))

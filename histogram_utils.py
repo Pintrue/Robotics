@@ -1,5 +1,6 @@
 from mcl_algo import *
 import math
+from initial import *
 
 def shiftHistLeft(hist, n):
     shift = n % len(hist)
@@ -66,7 +67,7 @@ def calculateAngle(x, y, m, pa, pb):
     pb_y = pb[1]
     const_a = pb_y - pa_y
     const_b = pa_x - pb_x
-    const_c = (const_a * (pa_x - x) + const_b * (pa_y - y)) / m
+    const_c = (const_a * (pa_x - x) + const_b * (pa_y - y)) / float(m)
     const_d_sqr = const_a**2 + const_b**2 - const_c**2
     if const_d_sqr >= 0:
         const_d = math.sqrt(const_d_sqr)
@@ -88,6 +89,4 @@ def calculateAngle(x, y, m, pa, pb):
     #print "const_d: " + str(const_d_sqr)
     return []
 
-m = 72
-p = (138, 54)
-print(possibleAngles(p, m))
+print Init().turnToWall(4)

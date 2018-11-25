@@ -2,6 +2,12 @@ import brickpi
 import time
 import math
 
+r_1 = [127, 255, 82, 28]
+r_2 = [30, 50, 182, 28]
+r_3 = [31, 27, 179, 52]
+r_4 = [73, 154, 137, 53]
+r_5 = [30, 39, 48, 167]
+wall_rds = [r_1, r_2, r_3, r_4, r_5]
 
 class Init:
     def __init__(self):
@@ -51,14 +57,14 @@ class Init:
 
         #sonar sensor on top
         sensorParam = self.interface.MotorAngleControllerParameters()
-        sensorParam.maxRotationAcceleration = 10.0
-        sensorParam.maxRotationSpeed = 24.0
+        sensorParam.maxRotationAcceleration = 3.0
+        sensorParam.maxRotationSpeed = 7.5
         sensorParam.feedForwardGain = 255/20.0
         sensorParam.minPWM = 18.0
         sensorParam.pidParameters.minOutput = -255
         sensorParam.pidParameters.maxOutput = 255
         sensorParam.pidParameters.k_p = 300
-        sensorParam.pidParameters.k_i = 250
+        sensorParam.pidParameters.k_i = 200
         sensorParam.pidParameters.k_d = 100
 
         self.interface.setMotorAngleControllerParameters(self.motors[0],motorParams0)
@@ -114,6 +120,35 @@ class Init:
         self.global_theta += degree
         self.global_theta %= 360
     
+    def turnToWall(self, p_idx):
+        rds = wall_rds[p_idx]
+        rds = [max(rds)]
+        rds = [51]
+        angle = 0
+        reading = self.ultrasonic_direct_reading()
+        print "reading: " + str(reading)
+        diff = min(map(lambda x: (x - reading)**2, rds))
+        candidate = []
+        if diff < 10:
+            candidate.append(0)
+        print "difference: " + str(diff)
+        for i in range(1,36):
+            self.turn_sensor(10)
+            reading = self.ultrasonic_direct_reading()
+            print "reading: " + str(reading)
+            newDiff = min(map(lambda x: (x - reading)**2, rds))
+            if newDiff < 10:
+                candidate.append(i)
+            diff, angle= (newDiff, i) if newDiff <= diff else (diff, angle)
+            print "difference " + str(diff)
+        self.reset_sensor()
+        print "candidate number: " + str(len(candidate))
+        print "sum of candidate: " + str(sum(candidate))
+        if len(candidate) > 0:
+            angle = sum(candidate) / float(len(candidate))
+        self.turn(angle * 10)
+        return angle, diff, self.ultrasonic_average_reading()
+
     def turn_sensor(self, degree):
         if degree == 0:
             return
@@ -121,6 +156,7 @@ class Init:
         while not self.interface.motorAngleReferencesReached(self.motors[2:]):
             time.sleep(0.05)
         self.global_sensor_theta += degree
+
 
     def reset_sensor(self):
         degree = -self.global_sensor_theta
@@ -296,6 +332,7 @@ class Init:
         self.move(40)
         time.sleep(1)
         self.move(-40)
+
 '''
     def detect_bump(self):
         distance = 5

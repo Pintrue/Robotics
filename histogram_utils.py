@@ -9,9 +9,9 @@ def shiftHistRight(hist, n):
     return hist[len(hist) - shift:] + hist[:len(hist) - shift]
 
 def histError(actualHist, standardHist):
-    return reduce(lambda x, y: x + y, map(lambda x: (x[0] - x[1])**2, zip(actualHist, standardHist)))
+    return reduce(lambda x, y: x + y, map(lambda x: (x[0] - x[1])**2 if x[0] < 255 else 0, zip(actualHist, standardHist)))
 
-def localize(actualHist, standardHists):
+def localize(actualHist, standardHists, ground_truth=None):
     histSize = len(actualHist)
     sampleSize = len(standardHists)
     errors = [0] * sampleSize
@@ -25,4 +25,10 @@ def localize(actualHist, standardHists):
         print "histError at " + str(idx) + " is: " + str(minError)
         errors[idx] = minError
         minimalErrIdx = errors.index(min(errors))
+    
+    if ground_truth is not None:
+        minimalErrIdx_g, shift_g = localize(actualHist, ground_truth)
+        if minimalErrIdx_g < minimalErrIdx:
+            minimalErrIdx, shifts[minimalErrIdx] = minimalErrIdx_g, shift_g
+    
     return (minimalErrIdx, shifts[minimalErrIdx])

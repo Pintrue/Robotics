@@ -1,4 +1,5 @@
-from mcl_algo import lines
+from mcl_algo import *
+import math
 
 def shiftHistLeft(hist, n):
     shift = n % len(hist)
@@ -32,3 +33,58 @@ def localize(actualHist, standardHists, ground_truth=None):
             minimalErrIdx, shifts[minimalErrIdx] = minimalErrIdx_g, shift_g
     
     return (minimalErrIdx, shifts[minimalErrIdx])
+
+#p: point, m: length
+def possibleAngles(p, m):
+    res = []
+    for i in range(len(lines)):
+        pa = lines[i][1]
+        pb = lines[i][2]
+        angles = calculateAngle(p[0], p[1], m, pa, pb)
+        #print "line " + str(lines[i]) + ": " + str(angles)
+        res += angles
+    #print "before filtering " + str(res)
+    toBeRemoved = []
+    for idx in range(len(res)):
+        cm = calculate_correct_m(p[0], p[1], res[idx])
+        #print "cm at angle: " + str(res[idx]) + " is " + str(cm)
+        if cm < m - 1 or cm > m + 1:
+            toBeRemoved.append(idx)
+    ret = []
+    #print "toberemoved: " + str(toBeRemoved)
+    for idx in range(len(res)):
+        if idx in toBeRemoved:
+            continue
+        ret.append(res[idx])
+    return ret
+
+#solve equation Acos(theta) - Bsin(theta) = C
+def calculateAngle(x, y, m, pa, pb):
+    pa_x = pa[0]
+    pa_y = pa[1]
+    pb_x = pb[0]
+    pb_y = pb[1]
+    const_a = pb_y - pa_y
+    const_b = pa_x - pb_x
+    const_c = (const_a * (pa_x - x) + const_b * (pa_y - y)) / m
+    const_d_sqr = const_a**2 + const_b**2 - const_c**2
+    if const_d_sqr > 0:
+        const_d = math.sqrt(const_d_sqr)
+        if const_b == 0:
+            res1 = math.acos(float(const_c) / const_a)
+            res2 = -res1
+            return [math.degrees(res1), math.degrees(res2)]
+        if const_a == 0:
+            #print "const_c " + str(const_c)
+            #print "const_b" + str(const_b)
+            res1 = math.asin(float(const_c) / const_b)
+            degree = math.degrees(res1)
+            return [degree, 180 - degree]
+        res1 = math.atan(float(const_a) / const_b) + math.atan(float(const_d) / const_c)
+        res2 = math.atan(float(const_a) / const_b) - math.atan(float(const_d) / const_c)
+        return [math.degrees(res1), math.degrees(res2)]
+    return []
+
+# m = 70
+# p = (180, 30)
+# print(possibleAngles(p, m))

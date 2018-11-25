@@ -126,6 +126,8 @@ interface.global_x = newRoute[0][0]
 interface.global_y = newRoute[0][1]
 
 print(interface.global_x, interface.global_y)
+possibleA = possibleAngles((newRoute[0][0], newRoute[0][1]), fstHist[0])
+print "possible angles: " + str(possibleA)
 
 
 '''

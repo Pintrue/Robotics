@@ -1,6 +1,7 @@
 import brickpi
 import time
 import math
+from enum import Enum
 
 r_1 = [127, 255, 82, 28]
 r_2 = [30, 50, 182, 28]
@@ -8,6 +9,12 @@ r_3 = [31, 27, 179, 52]
 r_4 = [73, 154, 137, 53]
 r_5 = [30, 39, 48, 167]
 wall_rds = [r_1, r_2, r_3, r_4, r_5]
+
+class Direction(Enum):
+    EAST = 0
+    NORTH = 1
+    WEST = 2
+    SOUTH = 3
 
 class Init:
     def __init__(self):
@@ -120,26 +127,31 @@ class Init:
         self.global_theta += degree
         self.global_theta %= 360
     
+    #p_idx: index of point the robot is currently on
     def turnToWall(self, p_idx):
-        rds = wall_rds[p_idx]
-        rds = [max(rds)]
-        rds = [51]
+        #reading index to which the direct reading is compared
+        rd_idx = [Direction.EAST, Direction.NORTH, Direction.WEST, Direction.NORTH, Direction.SOUTH]
+        std_rd = wall_rds[p_idx][rd_idx[p_idx].value]
+        return self.minimum_difference(std_rd, 36)
+    
+    #1 for clockwise, 0 for anti-clockwise
+    def minimum_difference(self, std_rd, steps, direction=0 ,stride=10):
         angle = 0
         reading = self.ultrasonic_direct_reading()
         print "reading: " + str(reading)
-        diff = min(map(lambda x: (x - reading)**2, rds))
+        diff = reading - std_rd
         candidate = []
-        if diff < 10:
+        if diff**2 < 10:
             candidate.append(0)
         print "difference: " + str(diff)
-        for i in range(1,36):
-            self.turn_sensor(10)
+        for i in range(1,steps):
+            self.turn_sensor(stride, direction=direction)
             reading = self.ultrasonic_direct_reading()
             print "reading: " + str(reading)
-            newDiff = min(map(lambda x: (x - reading)**2, rds))
-            if newDiff < 10:
+            newDiff = reading - std_rd
+            if newDiff**2 < 10:
                 candidate.append(i)
-            diff, angle= (newDiff, i) if newDiff <= diff else (diff, angle)
+            diff, angle = (newDiff, i) if newDiff**2 <= diff**2 else (diff, angle)
             print "difference " + str(diff)
         self.reset_sensor()
         print "candidate number: " + str(len(candidate))
@@ -149,10 +161,37 @@ class Init:
         self.turn(angle * 10)
         return angle, diff, self.ultrasonic_average_reading()
 
-    def turn_sensor(self, degree):
+
+    #p_idx: index of point from which the robot set off
+    #1 for clockwise turn, 0 for anti-clockwise turn
+    def trial_run_and_update(self, p_idx):
+        rd_idx = [Direction.SOUTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.EAST]
+        std_rd = wall_rds[p_idx][rd_idx[p_idx]].value
+        trial_distance = 15
+
+        #td: trial_distance
+        angle_f1 = lambda diff, td: math.asin(diff/float(td))
+        angle_f2 = lambda diff, td: math.asin(diff/float(td)) + 90
+        angle_f3 = lambda diff, td: -180 - math.asin(diff/float(td))
+        angle_f4 = lambda diff, td: 90 - math.asin(diff/float(td))
+        angle_f5 = lambda diff, td: -90 - math.asin(diff/float(td))
+        angle_function = [angle_f1, angle_f2, angle_f3, angle_f4, angle_f5]
+
+        self.move(trial_distance)
+        _, diff, _ = self.minimum_difference(std_rd, 18)
+        curr_angle = angle_function[p_idx](diff, trial_distance)
+        self.global_theta = curr_angle
+        return curr_angle
+        
+
+    #1 for clockwise, 0 for anti-clockwise
+    def turn_sensor(self, degree, direction=0):
         if degree == 0:
             return
-        self.interface.increaseMotorAngleReferences(self.motors[2:],[math.pi * self.sensor_angle_ratio * degree])
+        if direction:
+            self.interface.increaseMotorAngleReferences(self.motors[2:],[math.pi * self.sensor_angle_ratio * -degree])
+        else:
+            self.interface.increaseMotorAngleReferences(self.motors[2:],[math.pi * self.sensor_angle_ratio * degree])
         while not self.interface.motorAngleReferencesReached(self.motors[2:]):
             time.sleep(0.05)
         self.global_sensor_theta += degree

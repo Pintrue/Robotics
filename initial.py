@@ -1,7 +1,7 @@
 import brickpi
 import time
 import math
-from enum import Enum
+#from enum import Enum
 
 r_1 = [127, 255, 82, 28]
 r_2 = [30, 50, 182, 28]
@@ -9,13 +9,14 @@ r_3 = [31, 27, 179, 52]
 r_4 = [73, 154, 137, 53]
 r_5 = [30, 39, 48, 167]
 wall_rds = [r_1, r_2, r_3, r_4, r_5]
-
+waypoints = [(84,30), (180,30), (180,54), (138,54), (138,168)]
+'''
 class Direction(Enum):
     EAST = 0
     NORTH = 1
     WEST = 2
     SOUTH = 3
-
+'''
 class Init:
     def __init__(self):
         self.interface = brickpi.Interface()
@@ -24,7 +25,7 @@ class Init:
         #0 and 1 are for wheels, 3 is for sonar sensor on the top
         self.motors = [0,1,3]
         
-        self.angle_ratio_left = 1.05 / 90
+        self.angle_ratio_left = 1.1 / 90
         self.angle_ratio_right = 1.0 / 90
         self.sensor_angle_ratio = 0.53 / 90
         self.move_ratio = 0.3
@@ -130,12 +131,15 @@ class Init:
     #p_idx: index of point the robot is currently on
     def turnToWall(self, p_idx):
         #reading index to which the direct reading is compared
-        rd_idx = [Direction.EAST, Direction.NORTH, Direction.WEST, Direction.NORTH, Direction.SOUTH]
-        std_rd = wall_rds[p_idx][rd_idx[p_idx].value]
-        return self.minimum_difference(std_rd, 36)
+        rd_idx = [0, 1, 2, 1, 3]
+        std_rd = wall_rds[p_idx][rd_idx[p_idx]]
+        angle, df, rd  = self.minimum_difference(std_rd, 36)
+        self.turn(angle * 10)
+        return angle, df, rd
     
     #1 for clockwise, 0 for anti-clockwise
     def minimum_difference(self, std_rd, steps, direction=0 ,stride=10):
+        print "comparing readings with " + str(std_rd)
         angle = 0
         reading = self.ultrasonic_direct_reading()
         print "reading: " + str(reading)
@@ -153,20 +157,23 @@ class Init:
                 candidate.append(i)
             diff, angle = (newDiff, i) if newDiff**2 <= diff**2 else (diff, angle)
             print "difference " + str(diff)
+            if len(candidate) > 3:
+                break
         self.reset_sensor()
         print "candidate number: " + str(len(candidate))
         print "sum of candidate: " + str(sum(candidate))
         if len(candidate) > 0:
             angle = sum(candidate) / float(len(candidate))
-        self.turn(angle * 10)
+        if angle > 18:
+            angle = angle - 36
         return angle, diff, self.ultrasonic_average_reading()
 
 
     #p_idx: index of point from which the robot set off
     #1 for clockwise turn, 0 for anti-clockwise turn
     def trial_run_and_update(self, p_idx):
-        rd_idx = [Direction.SOUTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.EAST]
-        std_rd = wall_rds[p_idx][rd_idx[p_idx]].value
+        rd_idx = [3, 0, 3, 2, 0]
+        std_rd = wall_rds[p_idx][rd_idx[p_idx]]
         trial_distance = 15
 
         #td: trial_distance
@@ -177,13 +184,28 @@ class Init:
         angle_f5 = lambda diff, td: -90 - math.asin(diff/float(td))
         angle_function = [angle_f1, angle_f2, angle_f3, angle_f4, angle_f5]
 
+        
+        direction = 0
+        if p_idx in [0,1]:
+            direction = 1
+            
         self.move(trial_distance)
-        _, diff, _ = self.minimum_difference(std_rd, 18)
+        _, diff, _ = self.minimum_difference(std_rd, 18, direction=direction)
+        print "std_rd " + str(std_rd)
+        print "difference" + str(diff)
         curr_angle = angle_function[p_idx](diff, trial_distance)
         self.global_theta = curr_angle
+        print "Angle after trial is " + str(curr_angle)
+        self.global_x = int(waypoints[p_idx][0] + trial_distance * math.cos(math.radians(curr_angle)))
+        self.global_y = int(waypoints[p_idx][1] + trial_distance * math.sin(math.radians(curr_angle)))
         return curr_angle
         
 
+    def navigation(self, p_idx):
+        routes = waypoints[p_idx + 1:] + waypoints[:p_idx + 1]
+        for r in routes:
+            self.navigateToWaypoint(r[0], r[1])
+        
     #1 for clockwise, 0 for anti-clockwise
     def turn_sensor(self, degree, direction=0):
         if degree == 0:
@@ -328,7 +350,7 @@ class Init:
         return readings[len(readings) / 2]
     
     def ultrasonic_direct_reading(self):
-        usReading = 0
+        usReading = [255]
         for _ in range(10):
             usReading = self.interface.getSensorValue(self.sensor_port)
             if usReading:

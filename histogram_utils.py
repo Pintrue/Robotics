@@ -1,3 +1,4 @@
+
 from mcl_algo import *
 import math
 from initial import *
@@ -89,4 +90,3 @@ def calculateAngle(x, y, m, pa, pb):
     #print "const_d: " + str(const_d_sqr)
     return []
 
-print Init().turnToWall(4)

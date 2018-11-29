@@ -89,7 +89,7 @@ points = [(84, 30), (180, 30), (180, 54), (138, 54), (138, 168)]
 interface = Init()
 interface.global_theta = 0
 interface.global_sensor_theta = 0
-steps = 4
+steps = 8
 
 particles = Particles()
 standardHist = waypoints_readings(points, int(360 / steps))
@@ -107,10 +107,12 @@ all_readings.append(p3_reading)
 all_readings.append(p4_reading)
 all_readings.append(p5_reading)
 
+print "localizing"
 #localize the car
 fstHist = interface.depth_histogram(steps)
 interface.reset_sensor()
-pointIdx, shift = localize(fstHist, standardHist)
+pointIdx, shift = localize(fstHist, all_readings, ground_truth=standardHist)
+print "at point: " + str(pointIdx)
 
 #shift measurement
 shiftedM = shiftHistLeft(fstHist, shift)
@@ -119,7 +121,12 @@ print "actual histogram being: " + str(fstHist)
 print "standard histogram being "+ str(standardHist)
 print "real readings being " + str(all_readings)
 
+interface.turnToWall(pointIdx)
+interface.trial_run_and_update(pointIdx)
+interface.navigation(pointIdx)
+
 #recalculate the route
+'''
 newRoute = shiftHistLeft(points, pointIdx)
 points = newRoute[1:]
 interface.global_x = newRoute[0][0]
@@ -128,7 +135,7 @@ interface.global_y = newRoute[0][1]
 print(interface.global_x, interface.global_y)
 possibleA = possibleAngles((newRoute[0][0], newRoute[0][1]), fstHist[0])
 print "possible angles: " + str(possibleA)
-
+'''
 
 '''
 for i in range(len(points)):
